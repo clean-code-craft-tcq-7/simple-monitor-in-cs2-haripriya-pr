@@ -97,9 +97,11 @@ public class Checker (ICheckerDisplay display)
             float vitalValue = (float)vitals.GetType().GetProperty(vital.Name)!.GetValue(vitals)!;
             float? lowerLimitValue = (float?)lowerLimit!.GetType().GetProperty(vital.Name)!.GetValue(lowerLimit);
             float? upperLimitValue = (float?)upperLimit!.GetType().GetProperty(vital.Name)!.GetValue(upperLimit);
-            result &= AlertNotInRange($"{vital.Name} is out of range", vitalValue, lowerLimitValue, upperLimitValue);
-            if(!result)
+            if (!AlertNotInRange($"{vital.Name} is out of range", vitalValue, lowerLimitValue, upperLimitValue))
+            {
+                result = false;
                 return;
+            }
         });
         return result;
     }

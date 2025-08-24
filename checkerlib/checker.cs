@@ -15,9 +15,9 @@ public class ConsoleDisplay : ICheckerDisplay
         for (int i = 0; i < 6; i++)
         {
             Console.Write("\r* ");
-            System.Threading.Thread.Sleep(1000);
+            Thread.Sleep(1000);
             Console.Write("\r *");
-            System.Threading.Thread.Sleep(1000);
+            Thread.Sleep(1000);
         }
     }
 }
@@ -25,7 +25,7 @@ public class ConsoleDisplay : ICheckerDisplay
 
 public class Checker (ICheckerDisplay display)
 {
-    ICheckerDisplay _display = display;
+    private readonly ICheckerDisplay _display = display;
 
     private static bool IsGreaterThan(float a, float? b, float toleranceValue = 0.00001f)
     {

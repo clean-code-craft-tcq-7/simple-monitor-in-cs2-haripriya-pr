@@ -32,19 +32,19 @@ public class CheckerTests
         VerifyMockDisplayWithAny(Times.Never());
 
         Assert.False(InitMockDisplay().VitalsOk(94f, 75, 100)); //Temp low limit
-        VerifyMockDisplayWithMsg(Times.Once(), "Temperature out of range");
+        VerifyMockDisplayWithMsg(Times.Once(), "Temperature is out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(104f, 75, 100)); //Temp high limit
-        VerifyMockDisplayWithMsg(Times.Once(), "Temperature out of range");
+        VerifyMockDisplayWithMsg(Times.Once(), "Temperature is out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(98f, 59, 100)); //Pulse low limit
-        VerifyMockDisplayWithMsg(Times.Once(), "Pulse Rate is out of range");
+        VerifyMockDisplayWithMsg(Times.Once(), "PulseRate is out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(98f, 103, 100)); //Pulse high limit
-        VerifyMockDisplayWithMsg(Times.Once(), "Pulse Rate is out of range");
+        VerifyMockDisplayWithMsg(Times.Once(), "PulseRate is out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(98f, 75, 89)); //SPO2 low limit
-        VerifyMockDisplayWithMsg(Times.Once(), "Oxygen Saturation out of range");
+        VerifyMockDisplayWithMsg(Times.Once(), "OxygenSaturation is out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(94.5f, 102, 100)); //Pulse & Temp out of range
         VerifyMockDisplayWithAny(Times.Once());
@@ -58,13 +58,13 @@ public class CheckerTests
         Assert.False(InitMockDisplay().VitalsOk(103f, 59, 87)); //All out of range
         VerifyMockDisplayWithAny(Times.Once());
 
-        Assert.True(InitMockDisplay().AlertNotInRange("Temperature out of range", 98, 95, 102)); // Normal temperature
+        Assert.True(InitMockDisplay().AlertNotInRange("Temperature", 98, 95, 102)); // Normal temperature
         VerifyMockDisplayWithAny(Times.Never());
 
-        Assert.False(InitMockDisplay().AlertNotInRange("Temperature out of range", 103, 95, 102)); //Temperature out of range
-        VerifyMockDisplayWithMsg(Times.Once(), "Temperature out of range");
+        Assert.False(InitMockDisplay().AlertNotInRange("Temperature", 103, 95, 102)); //Temperature out of range
+        VerifyMockDisplayWithMsg(Times.Once(), "Temperature is out of range");
 
-        Assert.True(InitMockDisplay().AlertNotInRange("Temperature out of range", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
+        Assert.True(InitMockDisplay().AlertNotInRange("Temperature", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
         VerifyMockDisplayWithAny(Times.Never());
         
         Vitals vitals = new()
@@ -83,8 +83,13 @@ public class CheckerTests
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure out of range
         VerifyMockDisplayWithMsg(Times.Once(), "BloodPressure is out of range");
 
+        _checker.language = "German";
+        Assert.False(InitMockDisplay().CheckAllVitals(vitals));
+        VerifyMockDisplayWithMsg(Times.Once(), "Blutzucker ist auﬂerhalb des Bereichs");
+
         vitals.RespiratoryRate = 50;
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure and Respiratory rate out of range
         VerifyMockDisplayWithAny(Times.Once());
+
     }
 }

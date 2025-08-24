@@ -42,9 +42,19 @@ public class VitalLimits
     public float? VitalMinimum { get; set; }
 }
 
+public class VitalLanguage
+{
+    public string Temperature { get; set; }
+    public string PulseRate { get; set; }
+    public string OxygenSaturation { get; set; }
+    public string BloodSugar { get; set; }
+    public string BloodPressure { get; set; }
+    public string RespiratoryRate { get; set; }
+}
 
 public class Checker (ICheckerDisplay display)
 {
+    public string language = "English";
     private readonly ICheckerDisplay _display = display;
     private readonly Vitals lowerLimit = new()
     {
@@ -64,6 +74,15 @@ public class Checker (ICheckerDisplay display)
         BloodPressure = 150,
         RespiratoryRate = 20
     };
+    private readonly VitalLanguage german = new()
+    {
+        Temperature = "Temperatur",
+        PulseRate = "Pulsfrequenz",
+        OxygenSaturation = "Sauerstoffsättigung",
+        BloodSugar = "Blutzucker",
+        BloodPressure = "Blutdruck",
+        RespiratoryRate = "Atemfrequenz"
+    };
 
     private static bool IsGreaterThan(float a, float? b, float toleranceValue = 0.00001f)
     {
@@ -80,8 +99,23 @@ public class Checker (ICheckerDisplay display)
         return false;
     }
 
+    public string TranslateAlertMsg(string msg)
+    {
+        switch (language)
+        {
+            case "English":
+                msg = $"{msg} is out of range";
+                break;
+            case "German":
+                msg = $"{new VitalLanguage().GetType().GetProperty(msg).GetValue(german)} ist außerhalb des Bereichs";
+                break;
+        }
+        return msg;
+    }
+
     public bool AlertNotInRange(string alertMsg, float reading, float? lowerLimit, float? upperLimit)
     {
+        alertMsg = TranslateAlertMsg(alertMsg);
         if (IsGreaterThan(reading, upperLimit) || IsLesserThan(reading, lowerLimit))
         {
             _display.DisplayAlert(alertMsg);
@@ -92,9 +126,9 @@ public class Checker (ICheckerDisplay display)
 
     public bool VitalsOk(float temperature, int pulseRate, int spo2)
     {
-        return AlertNotInRange("Temperature out of range", temperature, 95, 102)
-               && AlertNotInRange("Pulse Rate is out of range", pulseRate, 60, 100)
-               && AlertNotInRange("Oxygen Saturation out of range", spo2, 90, null);
+        return AlertNotInRange("Temperature", temperature, 95, 102)
+               && AlertNotInRange("PulseRate", pulseRate, 60, 100)
+               && AlertNotInRange("OxygenSaturation", spo2, 90, null);
     }
 
     private List<PropertyInfo> GetAllProperties()

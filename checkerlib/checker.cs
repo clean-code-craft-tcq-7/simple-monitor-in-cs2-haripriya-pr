@@ -150,7 +150,7 @@ public class Checker (ICheckerDisplay display)
         foreach ( var vital in GetAllProperties())
         {
             VitalLimits currentVitalValue = GetCurrentVital(vital, vitals);
-            if (!AlertNotInRange($"{vital.Name} is out of range", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
+            if (!AlertNotInRange($"{vital.Name}", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
             {
                 return false;
             }

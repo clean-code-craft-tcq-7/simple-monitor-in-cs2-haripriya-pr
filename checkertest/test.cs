@@ -28,7 +28,7 @@ public class CheckerTests
     [Fact]
     public void NotOkWhenAnyVitalIsOffRange()
     {
-        /*Assert.True(InitMockDisplay().VitalsOk(98.1f, 70, 98)); //All okay
+        Assert.True(InitMockDisplay().VitalsOk(98.1f, 70, 98)); //All okay
         VerifyMockDisplayWithAny(Times.Never());
 
         Assert.False(InitMockDisplay().VitalsOk(94f, 75, 100)); //Temp low limit
@@ -66,7 +66,7 @@ public class CheckerTests
 
         Assert.True(InitMockDisplay().AlertNotInRange("Temperature out of range", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
         VerifyMockDisplayWithAny(Times.Never());
-        */
+        
         Vitals vitals = new()
         {
             Temperature = 98.1f,
@@ -76,8 +76,8 @@ public class CheckerTests
             BloodPressure = 100,
             RespiratoryRate = 15
         };
-        /*Assert.True(InitMockDisplay().CheckAllVitals(vitals)); //All okay
-        VerifyMockDisplayWithAny(Times.Never());*/
+        Assert.True(InitMockDisplay().CheckAllVitals(vitals)); //All okay
+        VerifyMockDisplayWithAny(Times.Never());
 
         vitals.BloodPressure = 200;
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure out of range

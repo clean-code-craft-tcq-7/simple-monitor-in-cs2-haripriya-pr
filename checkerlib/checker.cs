@@ -35,6 +35,13 @@ public class Vitals
     public int RespiratoryRate { get; set; }
 }
 
+public class VitalLimits
+{
+    public float VitalValue { get; set; }
+    public float? VitalMaximum { get; set; }
+    public float? VitalMinimum { get; set; }
+}
+
 
 public class Checker (ICheckerDisplay display)
 {
@@ -95,14 +102,21 @@ public class Checker (ICheckerDisplay display)
         return [..new Vitals().GetType().GetProperties()];
     }
 
+    private VitalLimits GetCurrentVital(PropertyInfo vital, Vitals vitals)
+    {
+        return new VitalLimits { 
+            VitalValue = (float)vital.GetValue(vitals)!,
+            VitalMinimum = (float?)vital.GetValue(lowerLimit),
+            VitalMaximum = (float?)vital.GetValue(upperLimit)
+        };
+    }
+
     public bool CheckAllVitals(Vitals vitals)
     {
         foreach ( var vital in GetAllProperties())
         {
-            float vitalValue = (float)vital.GetValue(vitals)!;
-            float? lowerLimitValue = (float?)vital.GetValue(lowerLimit);
-            float? upperLimitValue = (float?)vital.GetValue(upperLimit);
-            if (!AlertNotInRange($"{vital} is out of range", vitalValue, lowerLimitValue, upperLimitValue))
+            VitalLimits currentVitalValue = GetCurrentVital(vital, vitals);
+            if (!AlertNotInRange($"{vital} is out of range", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
             {
                 return false;
             }

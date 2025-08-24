@@ -1,49 +1,160 @@
 ﻿namespace checkerlib;
+
+using Castle.Core.Internal;
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
-public class Checker
+public interface ICheckerDisplay
 {
-    public static bool VitalsOk(float temperature, int pulseRate, int spo2)
+    void DisplayAlert(string message);
+}
+
+public class ConsoleDisplay : ICheckerDisplay
+{
+    public void DisplayAlert(string message)
     {
-        if(temperature >102 || temperature < 95)
+        Console.WriteLine(message);
+        for (int i = 0; i < 6; i++)
         {
-            Console.WriteLine("Temperature critical!");
-            for (int i = 0; i < 6; i++)
-            {
-                Console.Write("\r* ");
-                System.Threading.Thread.Sleep(1000);
-                Console.Write("\r *");
-                System.Threading.Thread.Sleep(1000);
-            }
+            Console.Write("\r* ");
+            Thread.Sleep(1000);
+            Console.Write("\r *");
+            Thread.Sleep(1000);
+        }
+    }
+}
+
+public class Vitals
+{
+    public float Temperature { get; set; }
+    public int PulseRate {  get; set; }
+    public int? OxygenSaturation { get; set; }
+    public int BloodSugar { get; set; }
+    public int BloodPressure { get; set; }
+    public int RespiratoryRate { get; set; }
+}
+
+public class VitalLimits
+{
+    public float VitalValue { get; set; }
+    public float? VitalMaximum { get; set; }
+    public float? VitalMinimum { get; set; }
+}
+
+public class VitalLanguage
+{
+    public string Temperature { get; set; }
+    public string PulseRate { get; set; }
+    public string OxygenSaturation { get; set; }
+    public string BloodSugar { get; set; }
+    public string BloodPressure { get; set; }
+    public string RespiratoryRate { get; set; }
+}
+
+public class Checker (ICheckerDisplay display)
+{
+    public string language = "English";
+    private readonly ICheckerDisplay _display = display;
+    private readonly Vitals lowerLimit = new()
+    {
+        Temperature = 95,
+        PulseRate = 60,
+        OxygenSaturation = 90,
+        BloodSugar = 70,
+        BloodPressure = 90,
+        RespiratoryRate = 12
+    };
+    private readonly Vitals upperLimit = new()
+    {
+        Temperature = 102,
+        PulseRate = 100,
+        OxygenSaturation = null,
+        BloodSugar = 110,
+        BloodPressure = 150,
+        RespiratoryRate = 20
+    };
+    private readonly VitalLanguage german = new()
+    {
+        Temperature = "Temperatur",
+        PulseRate = "Pulsfrequenz",
+        OxygenSaturation = "Sauerstoffsättigung",
+        BloodSugar = "Blutzucker",
+        BloodPressure = "Blutdruck",
+        RespiratoryRate = "Atemfrequenz"
+    };
+
+    private static bool IsGreaterThan(float a, float? b, float toleranceValue = 0.00001f)
+    {
+        if (b.HasValue)
+            return (a - b.Value) > toleranceValue;
+        return false;
+
+    }
+
+    private static bool IsLesserThan(float a, float? b, float toleranceValue = 0.00001f)
+    {
+        if (b.HasValue)
+            return (b.Value - a) > toleranceValue;
+        return false;
+    }
+
+    public string TranslateAlertMsg(string msg)
+    {
+        switch (language)
+        {
+            case "English":
+                msg = $"{msg} is out of range";
+                break;
+            case "German":
+                msg = $"{new VitalLanguage().GetType().GetProperty(msg).GetValue(german)} ist außerhalb des Bereichs";
+                break;
+        }
+        return msg;
+    }
+
+    public bool AlertNotInRange(string alertMsg, float reading, float? lowerLimit, float? upperLimit)
+    {
+        alertMsg = TranslateAlertMsg(alertMsg);
+        if (IsGreaterThan(reading, upperLimit) || IsLesserThan(reading, lowerLimit))
+        {
+            _display.DisplayAlert(alertMsg);
             return false;
         }
-        else if (pulseRate < 60 || pulseRate > 100)
+        return true;
+    }
+
+    public bool VitalsOk(float temperature, int pulseRate, int spo2)
+    {
+        return AlertNotInRange("Temperature", temperature, 95, 102)
+               && AlertNotInRange("PulseRate", pulseRate, 60, 100)
+               && AlertNotInRange("OxygenSaturation", spo2, 90, null);
+    }
+
+    private List<PropertyInfo> GetAllProperties()
+    {
+        return [..new Vitals().GetType().GetProperties()];
+    }
+
+    private VitalLimits GetCurrentVital(PropertyInfo vital, Vitals vitals)
+    {
+        return new VitalLimits(){ 
+            VitalValue = Convert.ToSingle(vital.GetValue(vitals)!),
+            VitalMinimum = vital.GetValue(lowerLimit) != null? Convert.ToSingle(vital.GetValue(lowerLimit)) : null,
+            VitalMaximum = vital.GetValue(upperLimit) != null ? Convert.ToSingle(vital.GetValue(upperLimit)) : null
+        };
+    }
+
+    public bool CheckAllVitals(Vitals vitals)
+    {
+        foreach ( var vital in GetAllProperties())
         {
-            Console.WriteLine("Pulse Rate is out of range!");
-            for (int i = 0; i < 6; i++)
+            VitalLimits currentVitalValue = GetCurrentVital(vital, vitals);
+            if (!AlertNotInRange($"{vital.Name}", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
             {
-                Console.Write("\r* ");
-                System.Threading.Thread.Sleep(1000);
-                Console.Write("\r *");
-                System.Threading.Thread.Sleep(1000);
+                return false;
             }
-            return false;
         }
-        else if (spo2 < 90)
-        {
-            Console.WriteLine("Oxygen Saturation out of range!");
-            for (int i = 0; i < 6; i++)
-            {
-                Console.Write("\r* ");
-                System.Threading.Thread.Sleep(1000);
-                Console.Write("\r *");
-                System.Threading.Thread.Sleep(1000);
-            }
-            return false;
-        }
-        Console.WriteLine("Vitals received within normal range");
-        Console.WriteLine("Temperature: {0} Pulse: {1}, SO2: {2}", temperature, pulseRate, spo2);
         return true;
     }
 }

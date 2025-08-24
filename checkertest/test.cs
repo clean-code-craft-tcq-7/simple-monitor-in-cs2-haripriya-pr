@@ -8,10 +8,12 @@ public class CheckerTests
 {
     private Mock<ICheckerDisplay> _mockDisplay = new();
     private Checker? _checker;
+    private string _language = "English";
     private Checker InitMockDisplay()
     {
         _mockDisplay = new Mock<ICheckerDisplay>();
         _checker = new Checker(_mockDisplay.Object);
+        _checker.language = _language;
         return _checker;
     }
 
@@ -83,7 +85,7 @@ public class CheckerTests
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure out of range
         VerifyMockDisplayWithMsg(Times.Once(), "BloodPressure is out of range");
 
-        _checker.language = "German";
+        _language = "German";
         Assert.False(InitMockDisplay().CheckAllVitals(vitals));
         VerifyMockDisplayWithMsg(Times.Once(), "Blutzucker ist auﬂerhalb des Bereichs");
 

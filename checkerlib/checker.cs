@@ -104,7 +104,6 @@ public class Checker (ICheckerDisplay display)
 
     private VitalLimits GetCurrentVital(PropertyInfo vital, Vitals vitals)
     {
-        Console.WriteLine("Vital value: "+ vital.Name);
         return new VitalLimits(){ 
             VitalValue = (float)vital.GetValue(vitals)!,
             VitalMinimum = (float?)vital.GetValue(lowerLimit),

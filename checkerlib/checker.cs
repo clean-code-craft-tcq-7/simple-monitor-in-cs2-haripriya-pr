@@ -1,4 +1,6 @@
 ﻿namespace checkerlib;
+
+using Castle.Core.Internal;
 using System;
 using System.Diagnostics;
 
@@ -22,10 +24,38 @@ public class ConsoleDisplay : ICheckerDisplay
     }
 }
 
+public class Vitals
+{
+    public float Temperature { get; set; }
+    public int PulseRate {  get; set; }
+    public int? OxygenSaturation { get; set; }
+    public int BloodSugar { get; set; }
+    public int BloodPressure { get; set; }
+    public int RespiratoryRate { get; set; }
+}
+
 
 public class Checker (ICheckerDisplay display)
 {
     private readonly ICheckerDisplay _display = display;
+    Vitals lowerLimit = new()
+    {
+        Temperature = 95,
+        PulseRate = 60,
+        OxygenSaturation = 90,
+        BloodSugar = 70,
+        BloodPressure = 90,
+        RespiratoryRate = 12
+    };
+    Vitals upperLimit = new()
+    {
+        Temperature = 102,
+        PulseRate = 100,
+        OxygenSaturation = null,
+        BloodSugar = 110,
+        BloodPressure = 150,
+        RespiratoryRate = 20
+    };
 
     private static bool IsGreaterThan(float a, float? b, float toleranceValue = 0.00001f)
     {
@@ -52,11 +82,28 @@ public class Checker (ICheckerDisplay display)
         return true;
     }
 
-
     public bool VitalsOk(float temperature, int pulseRate, int spo2)
     {
-        return AlertNotInRange("Temperature out of range", temperature, 95, 102) 
+        return AlertNotInRange("Temperature out of range", temperature, 95, 102)
                && AlertNotInRange("Pulse Rate is out of range", pulseRate, 60, 100)
                && AlertNotInRange("Oxygen Saturation out of range", spo2, 90, null);
+    }
+
+    public bool CheckAllVitals(Vitals vitals)
+    {
+        bool result = true;
+        vitals.GetType().GetProperties().ToList().ForEach(vital =>
+        {
+            if (result)
+            {
+                float vitalValue = (float)vitals.GetType().GetProperty(vital.Name)!.GetValue(vitals)!;
+                float? lowerLimitValue = (float)lowerLimit.GetType().GetProperty(vital.Name).GetValue(lowerLimit);
+                float? upperLimitValue = (float)upperLimit.GetType().GetProperty(vital.Name).GetValue(upperLimit);
+                result &= AlertNotInRange($"{vital.Name} is out of range", vitalValue, lowerLimitValue, upperLimitValue);
+            }
+            else
+                return;
+        });
+        return result;
     }
 }

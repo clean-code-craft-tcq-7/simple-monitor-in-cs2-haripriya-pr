@@ -6,23 +6,23 @@ using Xunit;
 
 public class CheckerTests
 {
-    private Mock<ICheckerDisplay> mockDisplay = new Mock<ICheckerDisplay>();
-    private Checker? Checker;
+    private Mock<ICheckerDisplay> _mockDisplay = new();
+    private Checker? _checker;
     private Checker InitMockDisplay()
     {
-        mockDisplay = new Mock<ICheckerDisplay>();
-        Checker = new Checker(mockDisplay.Object);
-        return Checker;
+        _mockDisplay = new Mock<ICheckerDisplay>();
+        _checker = new Checker(_mockDisplay.Object);
+        return _checker;
     }
 
     private void VerifyMockDisplayWithMsg(Times times, string alertMsg)
     {
-        mockDisplay.Verify(d => d.DisplayAlert(alertMsg), times);
+        _mockDisplay.Verify(d => d.DisplayAlert(alertMsg), times);
     }
 
     private void VerifyMockDisplayWithAny(Times times)
     {
-        mockDisplay.Verify(d => d.DisplayAlert(It.IsAny<string>()), times);
+        _mockDisplay.Verify(d => d.DisplayAlert(It.IsAny<string>()), times);
     }
 
     [Fact]
@@ -66,5 +66,25 @@ public class CheckerTests
 
         Assert.True(InitMockDisplay().AlertNotInRange("Temperature out of range", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
         VerifyMockDisplayWithAny(Times.Never());
+
+        Vitals vitals = new()
+        {
+            Temperature = 98.1f,
+            PulseRate = 70,
+            OxygenSaturation = 98,
+            BloodSugar = 100,
+            BloodPressure = 100,
+            RespiratoryRate = 15
+        };
+        Assert.True(InitMockDisplay().CheckAllVitals(vitals)); //All okay
+        VerifyMockDisplayWithAny(Times.Never());
+
+        vitals.BloodPressure = 200;
+        Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure out of range
+        VerifyMockDisplayWithMsg(Times.Once(), "BloodPressure is out of range");
+
+        vitals.RespiratoryRate = 50;
+        Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure and Respiratory rate out of range
+        VerifyMockDisplayWithAny(Times.Once());
     }
 }

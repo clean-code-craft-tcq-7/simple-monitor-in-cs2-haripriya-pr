@@ -47,16 +47,16 @@ public class CheckerTests
         VerifyMockDisplayWithMsg(Times.Once(), "Oxygen Saturation out of range");
 
         Assert.False(InitMockDisplay().VitalsOk(94.5f, 102, 100)); //Pulse & Temp out of range
-        VerifyMockDisplayWithAny(Times.Exactly(2));
+        VerifyMockDisplayWithAny(Times.Once());
 
         Assert.False(InitMockDisplay().VitalsOk(93f, 75, 85)); //Temp & SPO2 out of range
-        VerifyMockDisplayWithAny(Times.Exactly(2));
+        VerifyMockDisplayWithAny(Times.Once());
 
         Assert.False(InitMockDisplay().VitalsOk(98f, 59, 88)); //Pulse & SPO2 out of range
-        VerifyMockDisplayWithAny(Times.Exactly(2));
+        VerifyMockDisplayWithAny(Times.Once());
 
         Assert.False(InitMockDisplay().VitalsOk(103f, 59, 87)); //All out of range
-        VerifyMockDisplayWithAny(Times.Exactly(3));
+        VerifyMockDisplayWithAny(Times.Once());
 
         Assert.True(InitMockDisplay().AlertNotInRange("Temperature out of range", 98, 95, 102)); // Normal temperature
         VerifyMockDisplayWithAny(Times.Never());

@@ -87,7 +87,7 @@ public class CheckerTests
 
         _language = "German";
         Assert.False(InitMockDisplay().CheckAllVitals(vitals));
-        VerifyMockDisplayWithMsg(Times.Once(), "Blutzucker ist auﬂerhalb des Bereichs");
+        VerifyMockDisplayWithMsg(Times.Once(), "Blutdruck ist auﬂerhalb des Bereichs");
 
         vitals.RespiratoryRate = 50;
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure and Respiratory rate out of range

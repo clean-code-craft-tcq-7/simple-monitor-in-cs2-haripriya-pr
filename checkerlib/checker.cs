@@ -91,18 +91,17 @@ public class Checker (ICheckerDisplay display)
 
     public bool CheckAllVitals(Vitals vitals)
     {
-        bool result = true;
-        vitals.GetType().GetProperties().ToList().ForEach(vital =>
+        var propertyInfos = vitals.GetType().GetProperties().ToList().Select(x=> x.Name);
+        foreach ( var vital in propertyInfos)
         {
-            float vitalValue = (float)vitals.GetType().GetProperty(vital.Name)!.GetValue(vitals)!;
-            float? lowerLimitValue = (float?)lowerLimit!.GetType().GetProperty(vital.Name)!.GetValue(lowerLimit);
-            float? upperLimitValue = (float?)upperLimit!.GetType().GetProperty(vital.Name)!.GetValue(upperLimit);
-            if (!AlertNotInRange($"{vital.Name} is out of range", vitalValue, lowerLimitValue, upperLimitValue))
+            float vitalValue = (float)vitals.GetType().GetProperty(vital)!.GetValue(vitals)!;
+            float? lowerLimitValue = (float?)lowerLimit!.GetType().GetProperty(vital)!.GetValue(lowerLimit);
+            float? upperLimitValue = (float?)upperLimit!.GetType().GetProperty(vital)!.GetValue(upperLimit);
+            if (!AlertNotInRange($"{vital} is out of range", vitalValue, lowerLimitValue, upperLimitValue))
             {
-                result = false;
-                return;
+                return false;
             }
-        });
-        return result;
+        }
+        return true;
     }
 }

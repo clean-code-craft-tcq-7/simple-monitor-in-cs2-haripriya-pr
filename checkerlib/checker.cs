@@ -104,7 +104,8 @@ public class Checker (ICheckerDisplay display)
 
     private VitalLimits GetCurrentVital(PropertyInfo vital, Vitals vitals)
     {
-        return new VitalLimits { 
+        Console.WriteLine("Vital value: "+ vital.Name);
+        return new VitalLimits(){ 
             VitalValue = (float)vital.GetValue(vitals)!,
             VitalMinimum = (float?)vital.GetValue(lowerLimit),
             VitalMaximum = (float?)vital.GetValue(upperLimit)
@@ -116,7 +117,7 @@ public class Checker (ICheckerDisplay display)
         foreach ( var vital in GetAllProperties())
         {
             VitalLimits currentVitalValue = GetCurrentVital(vital, vitals);
-            if (!AlertNotInRange($"{vital} is out of range", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
+            if (!AlertNotInRange($"{vital.Name} is out of range", currentVitalValue.VitalValue, currentVitalValue.VitalMinimum, currentVitalValue.VitalMaximum))
             {
                 return false;
             }

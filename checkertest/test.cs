@@ -19,5 +19,6 @@ public class CheckerTests
         Assert.False(Checker.VitalsOk(103f, 59, 87)); //All out of range
         Assert.True(Checker.AlertNotInRange("Temperature out of range", 98, 95, 102)); // Normal temperature
         Assert.False(Checker.AlertNotInRange("Temperature out of range", 103, 95, 102)); //Temperature out of range
+        Assert.True(Checker.AlertNotInRange("Temperature out of range", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
     }
 }

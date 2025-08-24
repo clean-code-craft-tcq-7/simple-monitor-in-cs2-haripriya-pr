@@ -2,9 +2,14 @@
 using System;
 using System.Diagnostics;
 
-public class Checker
+public interface ICheckerDisplay
 {
-    public static void DisplayAlert(string message)
+    void DisplayAlert(string message);
+}
+
+public class ConsoleDisplay : ICheckerDisplay
+{
+    public void DisplayAlert(string message)
     {
         Console.WriteLine(message);
         for (int i = 0; i < 6; i++)
@@ -15,6 +20,12 @@ public class Checker
             System.Threading.Thread.Sleep(1000);
         }
     }
+}
+
+
+public class Checker (ICheckerDisplay display)
+{
+    ICheckerDisplay _display = display;
 
     private static bool IsGreaterThan(float a, float? b, float toleranceValue = 0.00001f)
     {
@@ -31,18 +42,18 @@ public class Checker
         return false;
     }
 
-    public static bool AlertNotInRange(string alertMsg, float reading, float? lowerLimit, float? upperLimit)
+    public bool AlertNotInRange(string alertMsg, float reading, float? lowerLimit, float? upperLimit)
     {
         if (IsGreaterThan(reading, upperLimit) || IsLesserThan(reading, lowerLimit))
         {
-            DisplayAlert(alertMsg);
+            _display.DisplayAlert(alertMsg);
             return false;
         }
         return true;
     }
 
 
-    public static bool VitalsOk(float temperature, int pulseRate, int spo2)
+    public bool VitalsOk(float temperature, int pulseRate, int spo2)
     {
         return AlertNotInRange("Temperature out of range", temperature, 95, 102) 
                && AlertNotInRange("Pulse Rate is out of range", pulseRate, 60, 100)

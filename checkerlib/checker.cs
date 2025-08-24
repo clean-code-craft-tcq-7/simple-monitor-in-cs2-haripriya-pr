@@ -3,6 +3,7 @@
 using Castle.Core.Internal;
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
 public interface ICheckerDisplay
 {
@@ -38,7 +39,7 @@ public class Vitals
 public class Checker (ICheckerDisplay display)
 {
     private readonly ICheckerDisplay _display = display;
-    Vitals lowerLimit = new()
+    private readonly Vitals lowerLimit = new()
     {
         Temperature = 95,
         PulseRate = 60,
@@ -47,7 +48,7 @@ public class Checker (ICheckerDisplay display)
         BloodPressure = 90,
         RespiratoryRate = 12
     };
-    Vitals upperLimit = new()
+    private readonly Vitals upperLimit = new()
     {
         Temperature = 102,
         PulseRate = 100,
@@ -89,14 +90,18 @@ public class Checker (ICheckerDisplay display)
                && AlertNotInRange("Oxygen Saturation out of range", spo2, 90, null);
     }
 
+    private List<PropertyInfo> GetAllProperties()
+    {
+        return [..new Vitals().GetType().GetProperties()];
+    }
+
     public bool CheckAllVitals(Vitals vitals)
     {
-        var propertyInfos = vitals.GetType().GetProperties().ToList().Select(x=> x.Name);
-        foreach ( var vital in propertyInfos)
+        foreach ( var vital in GetAllProperties())
         {
-            float vitalValue = (float)vitals.GetType().GetProperty(vital)!.GetValue(vitals)!;
-            float? lowerLimitValue = (float?)lowerLimit!.GetType().GetProperty(vital)!.GetValue(lowerLimit);
-            float? upperLimitValue = (float?)upperLimit!.GetType().GetProperty(vital)!.GetValue(upperLimit);
+            float vitalValue = (float)vital.GetValue(vitals)!;
+            float? lowerLimitValue = (float?)vital.GetValue(lowerLimit);
+            float? upperLimitValue = (float?)vital.GetValue(upperLimit);
             if (!AlertNotInRange($"{vital} is out of range", vitalValue, lowerLimitValue, upperLimitValue))
             {
                 return false;

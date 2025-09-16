@@ -93,5 +93,6 @@ public class CheckerTests
         Assert.False(InitMockDisplay().CheckAllVitals(vitals)); //Blood pressure and Respiratory rate out of range
         VerifyMockDisplayWithAny(Times.Once());
 
+        //To build again
     }
 }

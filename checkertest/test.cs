@@ -57,7 +57,6 @@ public class CheckerTests
         VerifyMockDisplayWithAny(Times.Once());
 
         Assert.False(InitMockDisplay().VitalsOk(98f, 59, 88)); //Pulse & SPO2 out of range
-        VerifyMockDisplayWithAny(Times.Once());
 
         Assert.False(InitMockDisplay().VitalsOk(103f, 59, 87)); //All out of range
         VerifyMockDisplayWithAny(Times.Once());

@@ -62,7 +62,7 @@ public class Vitals
 public class VitalLimits
 {
     public float VitalValue { get; set; }
-    public float? VitalMaximum { get; set; }
+    public float VitalMaximum { get; set; }
     public float? VitalMinimum { get; set; }
 }
 
@@ -81,6 +81,7 @@ public class VitalLanguage
     public VitalLevels BloodSugar { get; set; } = new() { Low = "Hypoglycemia", High = "Hyperglycemia", Normal = "Blood sugar" };
     public VitalLevels BloodPressure { get; set; } = new() { Low = "Hypotension", High = "Hypertension", Normal = "Blood pressure" };
     public VitalLevels RespiratoryRate { get; set; } = new() { Low = "Bradypnea", High = "Tachypnea", Normal = "Respiratory rate" };
+    public string Warning = "Near ";
 }
 
 public class Checker (ICheckerDisplay display)
@@ -112,7 +113,8 @@ public class Checker (ICheckerDisplay display)
         OxygenSaturation = new() { Normal = "Sauerstoffsättigung", Low = "Hypoxämie", High = "Hyperoxie" },
         BloodSugar = new() { Normal = "Blutzucker", Low = "Hypoglykämie", High = "Hyperglykämie" },
         BloodPressure = new() { Normal = "Blutdruck", Low = "Hypotonie", High = "Hypertonie" },
-        RespiratoryRate = new() { Normal = "Atemfrequenz", Low = "Bradypnoe", High = "Tachypnoe" }
+        RespiratoryRate = new() { Normal = "Atemfrequenz", Low = "Bradypnoe", High = "Tachypnoe" },
+        Warning = "Fast "
     };
     private readonly float warningToleranceValue = 0.015f; //1.5%
 
@@ -145,62 +147,74 @@ public class Checker (ICheckerDisplay display)
         return false;
     }
 
-    public string TranslateAlertMsg(PropertyInfo languagePropertyInfo, PropertyInfo levelPropertyInfo, string appendResult = "")
+    public (string,VitalLanguage) TranslateAlertMsg(PropertyInfo languagePropertyInfo, PropertyInfo levelPropertyInfo)
     {
         string alertMsg = string.Empty;
-        switch (language)
-        {
-            case "English":
-                appendResult += !appendResult.Equals(string.Empty) ? " " : "";
-                alertMsg = $"{appendResult}{levelPropertyInfo.GetValue(languagePropertyInfo.GetValue(new VitalLanguage()))}";
-                break;
-            case "German":
-                appendResult = appendResult.Equals("Near") ? "Fast " : "";
-                appendResult = appendResult.Equals("Normal") ? "Normal " : "";
-                alertMsg = $"{appendResult}{levelPropertyInfo.GetValue(languagePropertyInfo.GetValue(german))}";
-                break;
-        }
-        return alertMsg;
+        if (language.Equals("German"))
+            return ($"{levelPropertyInfo.GetValue(languagePropertyInfo.GetValue(german))}", german);
+        else
+            return ($"{levelPropertyInfo.GetValue(languagePropertyInfo.GetValue(new VitalLanguage()))}", new VitalLanguage());
     }
 
-    public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float? upperLimit)
+    //level: 0 - low; 1 - normal; 2 - high
+    public string MapPropertyInfo(string propertyName, int level, bool warning = false)
     {
-        float currentWarningTolerance = 0;
-        if (upperLimit != null)
-            currentWarningTolerance = (float)upperLimit * warningToleranceValue;
         PropertyInfo languagePropertyInfo = new VitalLanguage().GetType().GetProperty(propertyName)!;
         PropertyInfo lowLevelPropertyInfo = new VitalLevels().GetType().GetProperty("Low")!;
         PropertyInfo highLevelPropertyInfo = new VitalLevels().GetType().GetProperty("High")!;
         PropertyInfo normalLevelPropertyInfo = new VitalLevels().GetType().GetProperty("Normal")!;
+        List<PropertyInfo> levels = [];
+        levels.Add(lowLevelPropertyInfo);
+        levels.Add(normalLevelPropertyInfo);
+        levels.Add(highLevelPropertyInfo);
+        var translateMsg = TranslateAlertMsg(languagePropertyInfo, levels.ElementAt(level));
+        string alertMsg = translateMsg.Item1;
+        if (warning)
+        {
+            alertMsg = translateMsg.Item2.Warning + alertMsg;
+        }
+        return alertMsg;
+    }
+
+    public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float upperLimit = 0)
+    {
+        float currentWarningTolerance = (float)upperLimit * warningToleranceValue;
         if (IsGreaterThan(reading, upperLimit))
         {
-            _display.DisplayAlert(TranslateAlertMsg(languagePropertyInfo,highLevelPropertyInfo));
+            _display.DisplayAlert(MapPropertyInfo(propertyName,2));
             return false;
         }
         else if (IsLesserThan(reading, lowerLimit))
         {
-            _display.DisplayAlert(TranslateAlertMsg(languagePropertyInfo, lowLevelPropertyInfo));
+            _display.DisplayAlert(MapPropertyInfo(propertyName,0));
             return false;
         }
-        else if (IsWithinLowerTolerance(reading, lowerLimit, currentWarningTolerance)){
-            _display.DisplayAlert(TranslateAlertMsg(languagePropertyInfo, lowLevelPropertyInfo,"Near"));
+        AlertInRangeWarning(propertyName, reading, lowerLimit, upperLimit, currentWarningTolerance);
+        return true;
+    }
+
+
+    public void AlertInRangeWarning(string propertyName, float reading, float? lowerLimit, float upperLimit = 0, float currentWarningTolerance = 0)
+    {
+        if (IsWithinLowerTolerance(reading, lowerLimit, currentWarningTolerance))
+        {
+            _display.DisplayAlert(MapPropertyInfo(propertyName,0,true));
         }
         else if (IsWithinUpperTolerance(reading, upperLimit, currentWarningTolerance))
         {
-            _display.DisplayAlert(TranslateAlertMsg(languagePropertyInfo, highLevelPropertyInfo, "Near"));
+            _display.DisplayAlert(MapPropertyInfo(propertyName, 2, true));
         }
         else
         {
-            _display.DisplayAlert(TranslateAlertMsg(languagePropertyInfo, normalLevelPropertyInfo, "Normal"));
+            _display.DisplayAlert(MapPropertyInfo(propertyName,1));
         }
-        return true;
     }
 
     public bool VitalsOk(float temperature, int pulseRate, int spo2)
     {
         return AlertNotInRange("Temperature", temperature, 95, 102)
                && AlertNotInRange("PulseRate", pulseRate, 60, 100)
-               && AlertNotInRange("OxygenSaturation", spo2, 90, null);
+               && AlertNotInRange("OxygenSaturation", spo2, 90);
     }
 
     private static List<PropertyInfo> GetAllProperties()
@@ -213,7 +227,7 @@ public class Checker (ICheckerDisplay display)
         return new VitalLimits(){ 
             VitalValue = Convert.ToSingle(vital.GetValue(vitals)!),
             VitalMinimum = vital.GetValue(lowerLimit) != null? Convert.ToSingle(vital.GetValue(lowerLimit)) : null,
-            VitalMaximum = vital.GetValue(upperLimit) != null ? Convert.ToSingle(vital.GetValue(upperLimit)) : null
+            VitalMaximum = vital.GetValue(upperLimit) != null ? Convert.ToSingle(vital.GetValue(upperLimit)) : 0
         };
     }
 

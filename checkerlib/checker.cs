@@ -32,13 +32,13 @@ public class Vitals
 {
     private string _temperatureString { get; set; } = string.Empty;
     private float _temperatureValue { get; set; }
-    Regex tempRegex = new Regex(@"^\d+(\.\d+)?(C|F)$", RegexOptions.IgnoreCase);
+    private readonly Regex tempRegex = new(@"^\d+(\.\d+)?(C|F)$", RegexOptions.IgnoreCase);
     //Temperature in F by default
     public string Temperature { get { return _temperatureValue.ToString(); } 
         set {
             if (tempRegex.IsMatch(value) && !_temperatureString.Equals(value,StringComparison.OrdinalIgnoreCase))
             {
-                string numericPart = value.Substring(0, value.Length - 2);
+                string numericPart = value[..^2];
                 if(float.TryParse(numericPart,out float parsedValue))
                 {
                     if(value.LastOrDefault() == 'C')
@@ -62,7 +62,7 @@ public class Vitals
 public class VitalLimits
 {
     public float VitalValue { get; set; }
-    public float VitalMaximum { get; set; }
+    public float? VitalMaximum { get; set; }
     public float? VitalMinimum { get; set; }
 }
 
@@ -149,7 +149,6 @@ public class Checker (ICheckerDisplay display)
 
     public (string,VitalLanguage) TranslateAlertMsg(PropertyInfo languagePropertyInfo, PropertyInfo levelPropertyInfo)
     {
-        string alertMsg = string.Empty;
         if (language.Equals("German"))
             return ($"{levelPropertyInfo.GetValue(languagePropertyInfo.GetValue(german))}", german);
         else
@@ -176,9 +175,9 @@ public class Checker (ICheckerDisplay display)
         return alertMsg;
     }
 
-    public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float upperLimit = 0)
+    public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float? upperLimit)
     {
-        float currentWarningTolerance = (float)upperLimit * warningToleranceValue;
+        float currentWarningTolerance = upperLimit != null? (float)upperLimit * warningToleranceValue : 0;
         if (IsGreaterThan(reading, upperLimit))
         {
             _display.DisplayAlert(MapPropertyInfo(propertyName,2));
@@ -194,7 +193,7 @@ public class Checker (ICheckerDisplay display)
     }
 
 
-    public void AlertInRangeWarning(string propertyName, float reading, float? lowerLimit, float upperLimit = 0, float currentWarningTolerance = 0)
+    public void AlertInRangeWarning(string propertyName, float reading, float? lowerLimit, float? upperLimit, float currentWarningTolerance = 0)
     {
         if (IsWithinLowerTolerance(reading, lowerLimit, currentWarningTolerance))
         {
@@ -214,7 +213,7 @@ public class Checker (ICheckerDisplay display)
     {
         return AlertNotInRange("Temperature", temperature, 95, 102)
                && AlertNotInRange("PulseRate", pulseRate, 60, 100)
-               && AlertNotInRange("OxygenSaturation", spo2, 90);
+               && AlertNotInRange("OxygenSaturation", spo2, 90, null);
     }
 
     private static List<PropertyInfo> GetAllProperties()
@@ -227,7 +226,7 @@ public class Checker (ICheckerDisplay display)
         return new VitalLimits(){ 
             VitalValue = Convert.ToSingle(vital.GetValue(vitals)!),
             VitalMinimum = vital.GetValue(lowerLimit) != null? Convert.ToSingle(vital.GetValue(lowerLimit)) : null,
-            VitalMaximum = vital.GetValue(upperLimit) != null ? Convert.ToSingle(vital.GetValue(upperLimit)) : 0
+            VitalMaximum = vital.GetValue(upperLimit) != null ? Convert.ToSingle(vital.GetValue(upperLimit)) : null
         };
     }
 

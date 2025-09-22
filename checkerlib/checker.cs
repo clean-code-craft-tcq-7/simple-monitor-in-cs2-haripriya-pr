@@ -41,7 +41,7 @@ public class Vitals
                 string numericPart = value[..^1];
                 if(float.TryParse(numericPart,out float parsedValue))
                 {
-                    if(value.LastOrDefault() == 'C')
+                    if(value.LastOrDefault() == 'c' || value.LastOrDefault() == 'C')
                     {
                         parsedValue = (parsedValue * 9 / 5) + 32;
                     }

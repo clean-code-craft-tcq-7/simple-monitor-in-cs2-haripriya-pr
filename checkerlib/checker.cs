@@ -38,7 +38,7 @@ public class Vitals
         set {
             if (tempRegex.IsMatch(value) && !_temperatureString.Equals(value,StringComparison.OrdinalIgnoreCase))
             {
-                string numericPart = value[..^2];
+                string numericPart = value[..^1];
                 if(float.TryParse(numericPart,out float parsedValue))
                 {
                     if(value.LastOrDefault() == 'C')
@@ -183,7 +183,6 @@ public class Checker (ICheckerDisplay display)
     public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float? upperLimit)
     {
         float currentWarningTolerance = CalculateWarningTolerance(upperLimit);
-        Console.WriteLine($"{propertyName} - {reading} - {lowerLimit} - {upperLimit}");
         if (IsGreaterThan(reading, upperLimit))
         {
             _display.DisplayAlert(MapPropertyInfo(propertyName,2));

@@ -32,7 +32,7 @@ public class CheckerTests
     [Fact]
     public void NotOkWhenAnyVitalIsOffRange()
     {
-        /*Assert.True(InitMockDisplay().VitalsOk(98.1f, 70, 98)); //All okay
+        Assert.True(InitMockDisplay().VitalsOk(98.1f, 70, 98)); //All okay
         VerifyMockDisplayWithAny(Times.Exactly(3));
 
         Assert.False(InitMockDisplay().VitalsOk(94f, 75, 100)); //Temp low limit
@@ -68,7 +68,7 @@ public class CheckerTests
         VerifyMockDisplayWithMsg(Times.Once(), "Hyperthermia");
 
         Assert.True(_checker.AlertNotInRange("Temperature", 98, null, 102)); //No temperature lower limit to test IsGreaterThan()
-        */
+        
         Vitals vitals = new()
         {
             Temperature = "98.1f",

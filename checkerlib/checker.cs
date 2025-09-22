@@ -90,7 +90,7 @@ public class Checker (ICheckerDisplay display)
     private readonly ICheckerDisplay _display = display;
     private readonly Vitals lowerLimit = new()
     {
-        Temperature = "95",
+        Temperature = "95f",
         PulseRate = 60,
         OxygenSaturation = 90,
         BloodSugar = 70,
@@ -99,7 +99,7 @@ public class Checker (ICheckerDisplay display)
     };
     private readonly Vitals upperLimit = new()
     {
-        Temperature = "102",
+        Temperature = "102f",
         PulseRate = 100,
         OxygenSaturation = null,
         BloodSugar = 110,
@@ -183,6 +183,7 @@ public class Checker (ICheckerDisplay display)
     public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float? upperLimit)
     {
         float currentWarningTolerance = CalculateWarningTolerance(upperLimit);
+        Console.WriteLine($"{propertyName} - {reading} - {lowerLimit} - {upperLimit}");
         if (IsGreaterThan(reading, upperLimit))
         {
             _display.DisplayAlert(MapPropertyInfo(propertyName,2));

@@ -75,12 +75,12 @@ public class VitalLevels
 
 public class VitalLanguage
 {
-    public VitalLevels Temperature { get; set; } = new() { Low = "Hypothermia",High = "Hyperthermia", Normal = "Temperature" };
-    public VitalLevels PulseRate { get; set; } = new() { Low = "Bradycardia", High = "Tachycardia", Normal = "Pulse rate" };
-    public VitalLevels OxygenSaturation { get; set; } = new() { Low = "Hypoxemia", High = "Hyperoxia", Normal = "Oxygen saturation" };
-    public VitalLevels BloodSugar { get; set; } = new() { Low = "Hypoglycemia", High = "Hyperglycemia", Normal = "Blood sugar" };
-    public VitalLevels BloodPressure { get; set; } = new() { Low = "Hypotension", High = "Hypertension", Normal = "Blood pressure" };
-    public VitalLevels RespiratoryRate { get; set; } = new() { Low = "Bradypnea", High = "Tachypnea", Normal = "Respiratory rate" };
+    public VitalLevels Temperature { get; set; } = new() { Low = "Hypothermia",High = "Hyperthermia", Normal = "Normal Temperature" };
+    public VitalLevels PulseRate { get; set; } = new() { Low = "Bradycardia", High = "Tachycardia", Normal = "Normal Pulse rate" };
+    public VitalLevels OxygenSaturation { get; set; } = new() { Low = "Hypoxemia", High = "Hyperoxia", Normal = "Normal Oxygen saturation" };
+    public VitalLevels BloodSugar { get; set; } = new() { Low = "Hypoglycemia", High = "Hyperglycemia", Normal = "Normal Blood sugar" };
+    public VitalLevels BloodPressure { get; set; } = new() { Low = "Hypotension", High = "Hypertension", Normal = "Normal Blood pressure" };
+    public VitalLevels RespiratoryRate { get; set; } = new() { Low = "Bradypnea", High = "Tachypnea", Normal = "Normal Respiratory rate" };
     public string Warning = "Near ";
 }
 
@@ -108,12 +108,12 @@ public class Checker (ICheckerDisplay display)
     };
     private readonly VitalLanguage german = new()
     {
-        Temperature = new() { Normal = "Temperatur", Low = "Hypothermie",  High = "Hyperthermie" },
-        PulseRate = new() { Normal = "Pulsfrequenz", Low = "Bradykardie", High = "Tachykardie" },
-        OxygenSaturation = new() { Normal = "Sauerstoffsättigung", Low = "Hypoxämie", High = "Hyperoxie" },
-        BloodSugar = new() { Normal = "Blutzucker", Low = "Hypoglykämie", High = "Hyperglykämie" },
-        BloodPressure = new() { Normal = "Blutdruck", Low = "Hypotonie", High = "Hypertonie" },
-        RespiratoryRate = new() { Normal = "Atemfrequenz", Low = "Bradypnoe", High = "Tachypnoe" },
+        Temperature = new() { Normal = "Normal Temperatur", Low = "Hypothermie",  High = "Hyperthermie" },
+        PulseRate = new() { Normal = "Normal Pulsfrequenz", Low = "Bradykardie", High = "Tachykardie" },
+        OxygenSaturation = new() { Normal = "Normal Sauerstoffsättigung", Low = "Hypoxämie", High = "Hyperoxie" },
+        BloodSugar = new() { Normal = "Normal Blutzucker", Low = "Hypoglykämie", High = "Hyperglykämie" },
+        BloodPressure = new() { Normal = "Normal Blutdruck", Low = "Hypotonie", High = "Hypertonie" },
+        RespiratoryRate = new() { Normal = "Normal Atemfrequenz", Low = "Bradypnoe", High = "Tachypnoe" },
         Warning = "Fast "
     };
     private readonly float warningToleranceValue = 0.015f; //1.5%
@@ -175,9 +175,14 @@ public class Checker (ICheckerDisplay display)
         return alertMsg;
     }
 
+    private float CalculateWarningTolerance(float? upperLimit)
+    {
+        return upperLimit != null ? (float)upperLimit * warningToleranceValue : 0;
+    }
+
     public bool AlertNotInRange(string propertyName, float reading, float? lowerLimit, float? upperLimit)
     {
-        float currentWarningTolerance = upperLimit != null? (float)upperLimit * warningToleranceValue : 0;
+        float currentWarningTolerance = CalculateWarningTolerance(upperLimit);
         if (IsGreaterThan(reading, upperLimit))
         {
             _display.DisplayAlert(MapPropertyInfo(propertyName,2));
